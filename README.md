@@ -9,6 +9,6 @@ A jegyzetek Markdown-rendereléséhez Marked és DOMPurify, a képletekhez KaTeX
 ## Indítás
 
 Ezen a linken keresztül eléred a weboldalt, sok sikert és jó tanulást!
-```
-literally-dex.github.io/the-vik-tutor/
-```
+
+*literally-dex.github.io/the-vik-tutor/*
+
