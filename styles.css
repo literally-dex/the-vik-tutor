@@ -229,7 +229,14 @@ h1, h2, h3, p { margin-top: 0; }
 .markdown-content p, .markdown-content ul, .markdown-content ol, .markdown-content blockquote, .markdown-content pre, .markdown-content table { margin: 0 0 1em; }
 .markdown-content ul, .markdown-content ol { padding-left: 1.6em; }
 .markdown-content li + li { margin-top: .35em; }
-.markdown-content blockquote { padding: 10px 15px; color: var(--muted); background: var(--surface-soft); border-left: 3px solid var(--mint); }
+.markdown-content blockquote { padding: 10px 15px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--line); border-left: 3px solid var(--mint); border-radius: 0 6px 6px 0; }
+.reader-markdown .reader-highlight { padding: 9px 12px; border: 1px solid var(--highlight-border); border-left: 4px solid var(--highlight-border); border-radius: 6px; background: var(--highlight-background); }
+.reader-markdown .reader-highlight p:last-child { margin-bottom: 0; }
+.reader-markdown .reader-highlight-interest { --highlight-background: #eef8f1; --highlight-border: #57a978; }
+.reader-markdown .reader-highlight-warning { --highlight-background: #fff6e5; --highlight-border: #d7a33d; }
+.reader-markdown .reader-highlight-concept { --highlight-background: #edf4ff; --highlight-border: #5689d2; }
+.reader-markdown .reader-highlight-heading { padding: 9px 12px; border: 1px solid var(--highlight-border); border-left: 4px solid var(--highlight-border); border-radius: 6px; background: var(--highlight-background); }
+.reader-markdown li.reader-highlight { margin: 0 0 .7em; padding: 8px 11px; }
 .markdown-content hr { margin: 1.7em 0; border: 0; border-top: 1px solid var(--line); }
 .markdown-content code { padding: .12em .35em; color: var(--blue-dark); background: var(--surface-soft); border-radius: 3px; font-family: var(--mono); font-size: .9em; }
 .markdown-content pre { padding: 14px; overflow-x: auto; background: #1d293a; border-radius: 5px; }
@@ -650,6 +657,9 @@ button.course-note-tag[aria-pressed="true"] { color: #fff; background: var(--blu
 
 body.dark .course-reader-dialog { color: var(--ink); }
 body.dark .course-card-open { color: #c1d9ff; }
+body.dark .reader-markdown .reader-highlight-interest { --highlight-background: #1d3935; --highlight-border: #65c9a1; }
+body.dark .reader-markdown .reader-highlight-warning { --highlight-background: #41371f; --highlight-border: #d8ae50; }
+body.dark .reader-markdown .reader-highlight-concept { --highlight-background: #1d3353; --highlight-border: #6ea3f2; }
 
 @media (max-width: 800px) {
   .topbar { gap: 12px; }

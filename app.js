@@ -173,6 +173,25 @@ function courseTagKey(tag) {
   return String(tag).replace(/^#/, "").toLocaleLowerCase("hu");
 }
 
+function stripMindMapSections(markdown) {
+  const lines = markdown.split(/\r?\n/);
+  const kept = [];
+  let removedSectionLevel = 0;
+  for (const line of lines) {
+    const heading = line.match(/^(#{1,6})\s+/);
+    if (removedSectionLevel) {
+      if (!heading || heading[1].length > removedSectionLevel) continue;
+      removedSectionLevel = 0;
+    }
+    if (heading && /mind\s*[-–]?\s*map/i.test(line)) {
+      removedSectionLevel = heading[1].length;
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function renderCourseFilters() {
   const subjectFilters = document.querySelector("#course-subject-filters");
   subjectFilters.innerHTML = subjects.map(({ name }) => {
@@ -236,8 +255,9 @@ function noteTags(note) {
 }
 
 function plainCourseContent(note) {
-  const markdown = note.fullContent
+  const markdown = stripMindMapSections(note.fullContent
     .replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "")
+  )
     .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)
     .replace(/!?\[\[([^\]]+)\]\]/g, "$1");
   const html = window.marked?.parse ? window.marked.parse(markdown) : markdown;
@@ -379,8 +399,9 @@ function prepareCourseReader(note) {
   if (!markdown?.parse || !purifier?.sanitize || !window.renderMathInElement) {
     throw new Error("A jegyzet megjelenítéséhez szükséges Markdown- vagy KaTeX-könyvtár nem érhető el.");
   }
-  const content = note.fullContent
+  const content = stripMindMapSections(note.fullContent
     .replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "")
+  )
     .replace(/\[cite:\s*[\d,\s]+\]/g, "")
     .replace(/!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target);
   const safeHtml = renderCourseMarkdown(content);
@@ -426,9 +447,34 @@ function prepareCourseReader(note) {
     ],
     throwOnError: false,
   });
+  decorateNoteHighlights(article);
   article.querySelectorAll("pre code").forEach((code) => window.Prism?.highlightElement(code));
   addCodeCopyButtons(article);
   renderFunctionGraphs(article);
+}
+
+function decorateNoteHighlights(article) {
+  const highlightRules = [
+    { pattern: /^(?:érdekesség|érdekességképpen|hétköznapi|mérnöki analógia|mérnöki motiváció|szemléletes|intuíció|gyakorlati példa)/i, className: "reader-highlight-interest" },
+    { pattern: /^(?:fontos|figyelem|vigyázat|hiba|tipikus hiba|csapda|zh|vizsga|ellenpélda)/i, className: "reader-highlight-warning" },
+    { pattern: /^(?:definíció|tétel|állítás|következmény|alaptétel|ekvivalencia-tétel)/i, className: "reader-highlight-concept" },
+  ];
+  article.querySelectorAll("p, li, blockquote").forEach((block) => {
+    const label = block.querySelector(":scope > strong")?.textContent.trim()
+      ?? block.querySelector(":scope > p > strong")?.textContent.trim()
+      ?? "";
+    const rule = highlightRules.find(({ pattern }) => pattern.test(label));
+    if (rule) block.classList.add("reader-highlight", rule.className);
+  });
+  [...article.querySelectorAll("h2, h3")].forEach((heading) => {
+    if (!/(?:zh|vizsga).*(?:csapd|hib)|(?:csapd|hib).*(?:zh|vizsga)/i.test(heading.textContent)) return;
+    heading.classList.add("reader-highlight-heading", "reader-highlight-warning");
+    const level = Number(heading.tagName.slice(1));
+    for (let element = heading.nextElementSibling; element; element = element.nextElementSibling) {
+      if (/^H[1-6]$/.test(element.tagName) && Number(element.tagName.slice(1)) <= level) break;
+      element.querySelectorAll("li").forEach((item) => item.classList.add("reader-highlight", "reader-highlight-warning"));
+    }
+  });
 }
 
 function renderFunctionGraphs(article) {
