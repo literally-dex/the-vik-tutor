@@ -8,14 +8,7 @@ A jegyzetek Markdown-rendereléséhez Marked és DOMPurify, a képletekhez KaTeX
 
 ## Indítás
 
-A JavaScript-modulok miatt helyi HTTP-szerverről nyisd meg az alkalmazást (ne közvetlenül `file://` címről):
-
-```sh
-python3 -m http.server 8000
+Ezen a linken keresztül eléred a weboldalt, sok sikert és jó tanulást!
 ```
-
-Ezután nyisd meg a `http://localhost:8000` címet. A felület statikus, nincs szükség csomagtelepítésre vagy backend szolgáltatásra.
-
-## GitHub Pages
-
-A `main` ágra történő push automatikusan telepíti a weboldalt GitHub Pages-re a `.github/workflows/pages.yml` munkafolyamat segítségével. A repó `Settings → Pages` oldalán a build source legyen **GitHub Actions**. Az első sikeres telepítés után az oldal a `https://<felhasználónév>.github.io/<repository>/` címen érhető el.
+literally-dex.github.io/the-vik-tutor/
+```
