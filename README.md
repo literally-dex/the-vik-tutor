@@ -1,4 +1,4 @@
-# BME VIK 1. féléves Oktatási Portál és Interaktív Szótár
+# BME VIK: Túlélési Kisokos Villamosmérnököknek
 
 Magyar nyelvű, reszponzív tanulóportál az első féléves hallgatóknak. A tananyagok tantárgyi szűrőkkel és kártyarácsban jelennek meg a `src/data/coursesData.json` fájlból. A fejléc keresője a jegyzet címében, címkéiben és teljes szövegében keres, gépelés közben legfeljebb hét jegyzettalálatot ajánl fel rövid szövegrészlettel; a találat kiválasztása megnyitja a részletes olvasót. A `Cmd+K` / `Ctrl+K` billentyűparancs közvetlenül a keresőre fókuszál. A ZH1/ZH2 gyorsszűrők az adatbázisban található címkék alapján működnek.
 
