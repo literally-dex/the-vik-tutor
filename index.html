@@ -78,7 +78,12 @@
         <div class="stats-note">Egy szemeszter,<br />közös gondolkodásmód.</div>
       </section>
 
-      <section id="tanulasi-utvonalak" class="content-section course-section">
+      <nav class="study-mode-switch" role="tablist" aria-label="Tananyag nézet">
+        <button class="study-mode-tab" type="button" role="tab" id="notes-mode-tab" aria-controls="tanulasi-utvonalak" aria-selected="true" data-study-mode="notes">📚 Törzsanyag / Jegyzetek</button>
+        <button class="study-mode-tab" type="button" role="tab" id="exams-mode-tab" aria-controls="exam-section" aria-selected="false" data-study-mode="exams">📝 ZH-k &amp; Vizsgák</button>
+      </nav>
+
+      <section id="tanulasi-utvonalak" class="content-section course-section" role="tabpanel" aria-labelledby="notes-mode-tab">
         <div class="section-heading course-heading">
           <div><div class="eyebrow">01 / KIDOLGOZOTT TANANYAGOK</div><h2>Tanulj a jegyzetekből.</h2></div>
           <p>Keress a jegyzetek címében, címkéiben vagy teljes szövegében. Nyisd meg a kidolgozást, és navigálj a fejezetek között.</p>
@@ -87,10 +92,6 @@
           <div class="course-filter-group">
             <span class="filter-label">TANTÁRGY</span>
             <nav id="course-subject-filters" class="course-filter-chips" aria-label="Jegyzetek szűrése tantárgy szerint"></nav>
-          </div>
-          <div class="course-filter-group exam-filter-group">
-            <span class="filter-label">ZH-GYORSFILTER</span>
-            <nav id="course-exam-filters" class="course-filter-chips" aria-label="Jegyzetek szűrése ZH szerint"></nav>
           </div>
           <div class="course-result-row">
             <span id="course-result-count" class="result-count" aria-live="polite"></span>
@@ -103,11 +104,36 @@
         </div>
       </section>
 
+      <section id="exam-section" class="content-section exam-section" role="tabpanel" aria-labelledby="exams-mode-tab" hidden>
+        <div class="section-heading course-heading">
+          <div><div class="eyebrow">02 / KORÁBBI ZH-K ÉS VIZSGÁK</div><h2 id="exam-section-title">Gyakorolj feladatsorokkal.</h2></div>
+          <p>Először csak a feladatokat nézd meg. A részletes megoldást külön, saját tempódban nyithatod le.</p>
+        </div>
+        <div class="exam-filter-panel">
+          <div class="course-filter-group">
+            <span class="filter-label">TANTÁRGY</span>
+            <nav id="exam-subject-filters" class="course-filter-chips" aria-label="Feladatsorok tantárgy szerinti szűrése"></nav>
+          </div>
+          <div class="course-filter-group">
+            <span class="filter-label">FELADATSOR TÍPUSA</span>
+            <nav id="exam-type-filters" class="course-filter-chips" aria-label="Feladatsorok típus szerinti szűrése"></nav>
+          </div>
+          <div class="course-result-row">
+            <span id="exam-result-count" class="result-count" aria-live="polite"></span>
+          </div>
+        </div>
+        <div id="exam-grid" class="exam-card-grid" aria-live="polite"></div>
+        <div id="exam-empty-state" class="course-empty-state" hidden>
+          <span aria-hidden="true">⌕</span><h3>Még nincs ilyen feladatsor</h3><p>Válassz másik tantárgyat vagy feladatsortípust.</p>
+        </div>
+      </section>
+
       <dialog id="course-reader" class="course-reader-dialog" aria-label="Jegyzet részletes levezetése"></dialog>
+      <dialog id="exam-reader" class="course-reader-dialog exam-reader-dialog" aria-label="ZH vagy vizsgafeladatsor"></dialog>
 
       <section id="szotar" class="content-section dictionary-section">
         <div class="section-heading">
-          <div><div class="eyebrow">02 / FOGALOMTÁR</div><h2>Mit keresel?</h2></div>
+          <div><div class="eyebrow">03 / FOGALOMTÁR</div><h2>Mit keresel?</h2></div>
           <p>Keress rá egy fogalomra, vagy indulj el valamelyik tárgy mentén.</p>
         </div>
         <div class="search-panel">
@@ -129,7 +155,7 @@
 
       <section id="tananyag" class="content-section learning-section">
         <div class="section-heading">
-          <div><div class="eyebrow">03 / GYORS PÉLDA</div><h2>Tanulj lépésről lépésre.</h2></div>
+          <div><div class="eyebrow">04 / GYORS PÉLDA</div><h2>Tanulj lépésről lépésre.</h2></div>
           <p>Egy gondolatmenet, végigvezetve. Válassz témát, és haladj a saját tempódban.</p>
         </div>
         <div class="lesson-shell">
@@ -144,7 +170,7 @@
 
       <section id="kviz" class="content-section quiz-section">
         <div class="section-heading">
-          <div><div class="eyebrow">04 / ÖNELLENŐRZÉS</div><h2>Próbáld ki, mit tudsz.</h2></div>
+          <div><div class="eyebrow">05 / ÖNELLENŐRZÉS</div><h2>Próbáld ki, mit tudsz.</h2></div>
           <p>Rövid kérdések, azonnali visszajelzéssel. A hibákból is lehet tanulni.</p>
         </div>
         <div class="quiz-shell">

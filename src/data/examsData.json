@@ -1,0 +1,201 @@
+[
+  {
+    "id": "physics1-2025-autumn-zh1",
+    "subject": "Fizika 1",
+    "title": "2025. Őszi Zárthelyi",
+    "type": "ZH1",
+    "year": 2025,
+    "semester": "2025. ősz",
+    "tags": [
+      "fizika",
+      "zh1",
+      "mechanika",
+      "kinematika",
+      "erőterek",
+      "mozgások"
+    ],
+    "summary": "Számolásos, kifejtendő és kiegészítendő feladatok a mechanika témaköreiből.",
+    "tasks": [
+      {
+        "id": "calculation-1",
+        "number": 1,
+        "title": "Szabadon eső test sebessége",
+        "category": "Számolásos",
+        "prompt": "Szabadon leejtünk egy testet $h$ magasságból. Mekkora sebességgel ér földet?",
+        "solution": "A feladatot a mechanikai energiamegmaradás törvényével a legegyszerűbb megoldani. A $h$ magasságban a testnek csak helyzeti (potenciális) energiája van, a talajt érés pillanatában pedig csak mozgási (kinetikus) energiája.  \n\n$$E_{pot}^{(kezdeti)} = E_{kin}^{(vegso)}$$$$mgh = \\frac{1}{2}mv^2$$\n\nA tömeggel ($m$) egyszerűsítve, majd a sebességre ($v$) rendezve:  \n\n$$gh = \\frac{1}{2}v^2$$$$v^2 = 2gh$$$$v = \\sqrt{2gh}$$",
+        "figures": []
+      },
+      {
+        "id": "calculation-2",
+        "number": 2,
+        "title": "Ferde hajítás hatótávolsága",
+        "category": "Számolásos",
+        "prompt": "Egy tömegpontot vízszintes talajról indítva $v_0$ kezdősebességgel elhajítunk úgy, hogy a kezdősebesség $\\alpha$ szöget zár be a vízszintessel. Az elhajítás helyétől milyen messzire ér földet a test?",
+        "solution": "Bontsuk fel a mozgást vízszintes ($x$) és függőleges ($y$) komponensekre! Kezdeti feltételek:\n\n- Vízszintes kezdősebesség: $v_{0x} = v_0 \\cos\\alpha$  \n    \n- Függőleges kezdősebesség: $v_{0y} = v_0 \\sin\\alpha$  \n    \n\nA mozgásegyenletek (kinematikai függvények):\n\n- $x(t) = v_0 \\cos\\alpha \\cdot t$ (vízszintesen egyenes vonalú egyenletes mozgás)\n    \n- $y(t) = v_0 \\sin\\alpha \\cdot t - \\frac{g}{2}t^2$ (függőlegesen szabadesés nehézségi gyorsulással)\n    \n\nA test akkor ér földet, amikor $y(t) = 0$. Ebből kiszámolható a repülési idő ($t_f$):  \n\n$$0 = v_0 \\sin\\alpha \\cdot t_f - \\frac{g}{2}t_f^2$$\n\nMivel $t_f \\neq 0$:  \n\n$$v_0 \\sin\\alpha = \\frac{g}{2}t_f \\implies t_f = \\frac{2v_0 \\sin\\alpha}{g}$$\n\nA hatótávolság az $x$ irányú elmozdulás a $t_f$ időpillanatban:  \n\n$$x = x(t_f) = v_0 \\cos\\alpha \\cdot \\frac{2v_0 \\sin\\alpha}{g}$$$$x = \\frac{2v_0^2 \\sin\\alpha \\cos\\alpha}{g}$$\n\n_(Megjegyzés: A trigonometrikus azonosság felhasználásával ez felírható_ $x = \\frac{v_0^2 \\sin(2\\alpha)}{g}$ _alakban is.)_",
+        "figures": []
+      },
+      {
+        "id": "calculation-3",
+        "number": 3,
+        "title": "Test vontatása lejtőn",
+        "category": "Számolásos",
+        "prompt": "Egy $\\alpha$ hajlásszögű lejtőn felfelé vontatunk egy $m$ tömegű testet lejtővel párhuzamos $F$ erővel. A lejtő és a test között a csúszási súrlódási együttható $\\mu$. **a)** Legalább mekkora legyen $F$, hogy a test megmozduljon? **b)** Mekkora legyen $F$, ha azt szeretnénk, hogy a test gyorsulása éppen $g$ legyen?",
+        "solution": "A testre ható erők a lejtővel párhuzamos ($x$) és arra merőleges ($y$) tengelyek mentén:\n\n- $y$ irány (merőleges a lejtőre): Nyomóerő ($F_{ny}$ vagy $F_t$) és a gravitációs erő merőleges komponense ($mg \\cos\\alpha$). Ebben az irányban nincs mozgás, így a gyorsulás zérus:  \n    \n    $$\\Sigma F_y = F_{ny} - mg \\cos\\alpha = 0 \\implies F_{ny} = mg \\cos\\alpha$$\n- A súrlódási erő: $F_s = \\mu \\cdot F_{ny} = \\mu mg \\cos\\alpha$. Mivel felfelé húzzuk a testet, a súrlódás lefelé (a lejtő mentén negatív irányba) hat.\n    \n- $x$ irány (párhuzamos a lejtővel): Húzóerő ($F$), gravitációs erő lejtőirányú komponense ($mg \\sin\\alpha$) és a súrlódási erő ($F_s$). Newton II. törvénye alapján:  \n    \n    $$\\Sigma F_x = F - mg \\sin\\alpha - F_s = m \\cdot a$$$$F - mg \\sin\\alpha - \\mu mg \\cos\\alpha = m \\cdot a$$\n\n**a) Határeset (megmozdulás):** Ekkor a gyorsulás $a = 0$.  \n\n$$F - mg \\sin\\alpha - \\mu mg \\cos\\alpha = 0$$$$F = mg \\sin\\alpha + \\mu mg \\cos\\alpha = mg(\\sin\\alpha + \\mu \\cos\\alpha)$$\n\n**b) A gyorsulás** $a = g$**:** Behelyettesítve a mozgásegyenletbe:  \n\n$$F - mg \\sin\\alpha - \\mu mg \\cos\\alpha = m \\cdot g$$$$F = mg + mg \\sin\\alpha + \\mu mg \\cos\\alpha = mg(1 + \\sin\\alpha + \\mu \\cos\\alpha)$$",
+        "figures": []
+      },
+      {
+        "id": "calculation-4",
+        "number": 4,
+        "title": "Függőleges síkú fonálinga",
+        "category": "Számolásos",
+        "prompt": "$l$ hosszúságú fonál... vízszintesen kifeszítjük, majd a tömegpontnak függőlegesen lefelé $v_0$ kezdősebességet adunk. A pálya legalsó pontján a kötelet feszítő erő $10mg$. Mekkora a $v_0$?",
+        "solution": "**1. Lépés: Sebesség meghatározása a legalsó ponton (Energiamegmaradás)** A vízszintes helyzet legyen a referenciaszint ($h_1 = l$), a legalsó pont pedig a nulla szint ($h_2 = 0$).  \n\n$$E_{mech}^{(fent)} = E_{mech}^{(lent)}$$$$\\frac{1}{2}mv_0^2 + mgl = \\frac{1}{2}mv^2$$\n\nVégigosztva $m$-mel és szorozva 2-vel, kifejezzük $v^2$-et:  \n\n$$v_0^2 + 2gl = v^2$$\n\n**2. Lépés: Dinamika a legalsó pontban** A legalsó pontban a fonálra függőlegesen hat a kötélerő ($F_k$) felfelé és a gravitációs erő ($mg$) lefelé. Ezek eredője biztosítja a centripetális gyorsulást a körpályán tartáshoz.  \n\n$$\\Sigma F_{radiális} = m \\cdot a_{cp}$$$$F_k - mg = m \\frac{v^2}{l}$$\n\nA feladat szerint a kötélerő tízszerese a súlynak: $F_k = 10mg$. Ezt, valamint az első lépésben kapott $v^2$-et behelyettesítve:  \n\n$$10mg - mg = m \\frac{v_0^2 + 2gl}{l}$$$$9mg = m \\frac{v_0^2 + 2gl}{l}$$\n\nEgyszerűsítünk a tömeggel ($m$):  \n\n$$9g = \\frac{v_0^2}{l} + \\frac{2gl}{l}$$$$9g = \\frac{v_0^2}{l} + 2g$$$$7g = \\frac{v_0^2}{l} \\implies v_0^2 = 7gl$$$$v_0 = \\sqrt{7gl}$$",
+        "figures": []
+      },
+      {
+        "id": "calculation-5",
+        "number": 5,
+        "title": "Rugó a lejtőn",
+        "category": "Számolásos",
+        "prompt": "$\\alpha$ hajlásszögű lejtőn $x$ értékkel összenyomott rugóra $m$ tömegű testet helyezünk. A rugó a testet $h$ magasságig löki fel (súrlódási együttható $\\mu$, $x \\ll h$). Mekkora a rugó direkciós állandója ($D$)?",
+        "solution": "A munkatételt vagy az általánosított energiamegmaradást használjuk: a rugóban tárolt rugalmas energia megnöveli a test helyzeti energiáját, és fedezi a súrlódási erő ellenében végzett munkát.  \n\n$$E_{rug\\acute{o}} = \\Delta E_{pot} + \\vert{}W_{s\\acute{u}rl\\acute{o}d\\acute{a}s}\\vert{}$$$$\\frac{1}{2}Dx^2 = mgh + F_s \\cdot s$$\n\nSzámítsuk ki a súrlódási munkát:\n\n- A test a lejtőn felfelé halad, a súrlódási erő: $F_s = \\mu mg \\cos\\alpha$.\n    \n- A lejtőn megtett út ($s$) és a magasság ($h$) kapcsolata: $\\sin\\alpha = \\frac{h}{s} \\implies s = \\frac{h}{\\sin\\alpha}$. _(Mivel_ $x \\ll h$_, az összenyomódásból adódó út- és magasságkülönbséget elhanyagoljuk)._\n    \n- A súrlódás munkája: $W_{surl} = F_s \\cdot s = \\mu mg \\cos\\alpha \\cdot \\frac{h}{\\sin\\alpha} = mgh \\cdot \\mu \\cot\\alpha$ (vagy $\\frac{\\mu mg h \\cos\\alpha}{\\sin\\alpha}$).\n    \n\nBehelyettesítve az energiaegyenletbe:  \n\n$$\\frac{1}{2}Dx^2 = mgh + mgh \\cdot \\mu \\frac{\\cos\\alpha}{\\sin\\alpha}$$\n\nKiemelve az $mgh$-t:  \n\n$$\\frac{1}{2}Dx^2 = mgh \\left(1 + \\mu \\frac{\\cos\\alpha}{\\sin\\alpha}\\right)$$\n\nRendezve a direkciós állandóra ($D$):  \n\n$$D = \\frac{2mgh}{x^2} \\left( 1 + \\mu \\frac{\\cos\\alpha}{\\sin\\alpha} \\right)$$",
+        "figures": []
+      },
+      {
+        "id": "calculation-6",
+        "number": 6,
+        "title": "Coriolis-erő az egyenlítő felett",
+        "category": "Számolásos",
+        "prompt": "Az egyenlítő fölött $h$ magasságból ejtett test. Föld szögsebessége $\\omega$. **a)** Milyen irányú Coriolis-erő hat rá? **b)** Coriolis-erő irányú sebességkomponens az idő függvényében? **c)** Mennyivel távolabb ér földet a Föld forgása miatt ($h$ függvényében)?",
+        "solution": "**a)** A Coriolis-erő képlete: $\\vec{F}_{cor} = -2m (\\vec{\\omega} \\times \\vec{v})$. Az Egyenlítőn a Föld szögsebesség vektora ($\\vec{\\omega}$) észak felé mutat. A zuhanó test sebességvektora ($\\vec{v}$) függőlegesen lefelé mutat. A jobbkéz-szabály alapján $\\vec{\\omega} \\times \\vec{v}$ nyugat felé mutat, a negatív előjel miatt a Coriolis-erő iránya **Kelet**.\n\n**b)** A zuhanás függőleges sebessége az idő függvényében: $v_y(t) = gt$. A Coriolis-erő nagysága:  \n\n$$F_{cor}(t) = 2m \\omega v_y(t) = 2m \\omega g t$$\n\nA Newton II. törvénye alapján a keleti irányú gyorsulás:  \n\n$$a_k(t) = \\frac{F_{cor}(t)}{m} = 2\\omega g t$$\n\nA keleti irányú sebesség ennek idő szerinti integrálja (0 kezdősebességgel):  \n\n$$v_k(t) = \\int_0^t a_k(t') dt' = \\int_0^t 2\\omega g t' dt' = 2\\omega g \\left[ \\frac{t'^2}{2} \\right]_0^t = \\omega g t^2$$\n\n**c)** A keleti elmozdulás ($x_k$) a sebesség idő szerinti integrálja a teljes esési idő alatt:  \n\n$$x_k(t) = \\int_0^t v_k(t') dt' = \\int_0^t \\omega g t'^2 dt' = \\omega g \\left[ \\frac{t'^3}{3} \\right]_0^t = \\frac{1}{3}\\omega g t^3$$\n\nAz esés teljes ideje ($t_f$) a függőleges mozgásból (szabadesés) adódik:  \n\n$$h = \\frac{1}{2}gt_f^2 \\implies t_f = \\sqrt{\\frac{2h}{g}}$$\n\nBehelyettesítve a teljes időt az elmozdulás képletébe:  \n\n$$x = \\frac{1}{3}\\omega g \\left( \\sqrt{\\frac{2h}{g}} \\right)^3 = \\frac{1}{3}\\omega g \\frac{2h}{g} \\sqrt{\\frac{2h}{g}} = \\frac{2}{3}\\omega h \\sqrt{\\frac{2h}{g}}$$",
+        "figures": []
+      },
+      {
+        "id": "extended-1",
+        "number": 1,
+        "title": "A mechanikai energia fogalma és megmaradása",
+        "category": "Kifejtendő",
+        "prompt": "Fejtse ki a következő témát: **A mechanikai energia fogalma és megmaradása**.",
+        "solution": "- **Definíció:** A mechanikai energia egy test (vagy rendszer) mozgási (kinetikus) és helyzeti (potenciális/rugalmas) energiájának összege. ($E_{mech} = E_{kin} + E_{pot}$)\n    \n- **Megmaradás törvénye:** Ha egy rendszerre csak konzervatív erők hatnak (zárt rendszer és nincs disszipáció, pl. súrlódás), akkor a rendszer teljes mechanikai energiája időben állandó marad.\n    \n- **Üstökös energiája:** Egy üstökös mechanikai energiája napközelben és naptávolban is **megegyezik (állandó)**, mert a Nap gravitációs erőtere konzervatív erőtér. Bár a mozgási és helyzeti energiák aránya változik (napközelben gyorsabb, de kisebb a helyzeti energiája), az összegük változatlan.",
+        "figures": []
+      },
+      {
+        "id": "extended-2",
+        "number": 2,
+        "title": "Egyenletesen gyorsuló körmozgás kinematikája",
+        "category": "Kifejtendő",
+        "prompt": "Fejtse ki a következő témát: **Egyenletesen gyorsuló körmozgás kinematikája**.",
+        "solution": "- **Szögelfordulás-idő függvény:** $\\varphi(t) = \\varphi_0 + \\omega_0 t + \\frac{1}{2}\\beta t^2$  \n    \n- **Szögsebesség-idő függvény:** $\\omega(t) = \\omega_0 + \\beta t$  \n    \n- **Matematikai kapcsolat:** A szögsebesség a szögelfordulás idő szerinti első deriváltja: $\\omega(t) = \\frac{d\\varphi(t)}{dt}$, illetve a szögelfordulás a szögsebesség függvény idő szerinti integrálja.",
+        "figures": []
+      },
+      {
+        "id": "completion-1",
+        "number": 1,
+        "title": "1. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Minél nagyobb egy test ________, annál nehezebb megváltoztatni a mozgásállapotát.",
+        "solution": "Minél nagyobb egy test **tömege (tehetetlensége)**, annál nehezebb megváltoztatni a mozgásállapotát.",
+        "figures": []
+      },
+      {
+        "id": "completion-2",
+        "number": 2,
+        "title": "2. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Egy körmozgást végző tömegpont szögsebességét megkétszerezzük. A tömegpont centripetális gyorsulása ________ nőtt.",
+        "solution": "Egy körmozgást végző tömegpont szögsebességét megkétszerezzük. A tömegpont centripetális gyorsulása **4-szeresére** nőtt. _(Mivel_ $a_{cp} = r\\omega^2$_)_",
+        "figures": []
+      },
+      {
+        "id": "completion-3",
+        "number": 3,
+        "title": "3. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Egy test 2 m utat tesz meg 1 m/s sebességgel, további 2 m utat pedig 2 m/s sebességgel. Mekkora a test átlagsebessége?",
+        "solution": "Egy test 2 m utat tesz meg 1 m/s sebességgel, további 2 m utat pedig 2 m/s sebességgel. A test átlagsebessége $4/3$ **m/s**. _(Összes út: 4m. Összes idő:_ $2/1 + 2/2 = 3$ _mp._ $v = s/t = 4/3$_)_",
+        "figures": []
+      },
+      {
+        "id": "completion-4",
+        "number": 4,
+        "title": "4. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Vízszintes hajítás esetén hogyan viszonyul az elmozdulás nagysága az elhajított test által megtett úthoz?",
+        "solution": "Vízszintes hajítás esetén az elmozdulás nagysága mindig **kisebb**, mint az elhajított test által megtett út. _(Az út a parabola ívhossza, az elmozdulás a húr hossza)_",
+        "figures": []
+      },
+      {
+        "id": "completion-5",
+        "number": 5,
+        "title": "5. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Milyen feltétel mellett őrzi meg egy tömegpont a mozgásállapotát?",
+        "solution": "Egy tömegpont megőrzi mozgásállapotát, amíg **külső erő nem kényszeríti annak megváltoztatására** (illetve amíg a rá ható erők eredője nulla).",
+        "figures": []
+      },
+      {
+        "id": "completion-6",
+        "number": 6,
+        "title": "6. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Vízszintes talaj felett egy torony tetejéről ferdén elhajítunk egy testet. A test mozgása során a sebességvektora és gyorsulásvektora ($g$) által bezárt szög akkor a legkisebb, amikor ________.",
+        "solution": "Vízszintes talaj felett egy torony tetejéről ferdén elhajítunk egy testet. A test mozgása során a sebességvektora és gyorsulásvektora ($g$) által bezárt szög akkor a legkisebb, amikor **földet ér (vagy a pályája legalsó pontján van)**.",
+        "figures": []
+      },
+      {
+        "id": "completion-7",
+        "number": 7,
+        "title": "7. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Milyen szög van egyenletesen gyorsuló körmozgás esetén a tömegpont eredő gyorsulásvektora és sebességvektora között?",
+        "solution": "Egyenletesen gyorsuló körmozgást végző tömegpont eredő gyorsulásvektora és sebességvektora által bezárt szög **hegyesszög** (kisebb, mint $90^{\\circ}$). _(A gyorsulásnak van sebesség irányú érintőirányú komponense és arra merőleges normális komponense)._",
+        "figures": []
+      },
+      {
+        "id": "completion-8",
+        "number": 8,
+        "title": "8. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Egy tömegpont ________ energiája megadja, mennyi munkavégzés árán juttatható a tömegpont egy adott referenciapontból a konzervatív erőtér kiszemelt pontjába.",
+        "solution": "Egy tömegpont **potenciális** energiája megadja, mennyi munkavégzés árán juttatható a tömegpont egy adott referenciapontból a konzervatív erőtér kiszemelt pontjába.",
+        "figures": []
+      },
+      {
+        "id": "completion-9",
+        "number": 9,
+        "title": "9. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "A Föld felszínén elhelyezett testre akkor hat függőleges irányú centrifugális erő, ha a test ________ helyezkedik el.",
+        "solution": "A Föld felszínén elhelyezett testre akkor hat függőleges irányú centrifugális erő, ha a test **az Egyenlítőn** helyezkedik el.",
+        "figures": []
+      },
+      {
+        "id": "completion-10",
+        "number": 10,
+        "title": "10. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Melyik fizikai mennyiség megváltozásával egyenlő a tömegpontra ható eredő erő munkája?",
+        "solution": "A tömegpontra ható erők (eredőjének) munkája egyenlő a tömegpont **mozgási (kinetikus) energiájának** megváltozásával. _(Ez a Munkatétel)._",
+        "figures": []
+      },
+      {
+        "id": "completion-11",
+        "number": 11,
+        "title": "11. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Tiszta gördülés esetén mennyi az elülső kerékpont talajhoz viszonyított sebességének és a tengely sebességének aránya?",
+        "solution": "Egy tisztán gördülő kerék elülső pontjának talajhoz viszonyított sebességének nagyságát elosztjuk a kerék tengelyének talajhoz viszonyított sebességével. Eredményül $\\sqrt{2}$-t kapunk. _(Tengely sebessége_ $v$_. Az elülső pont sebessége_ $v$ _előre és_ $v$ _lefelé, vektoriális összegük_ $\\sqrt{v^2+v^2} = \\sqrt{2}v$_.)_",
+        "figures": []
+      },
+      {
+        "id": "completion-12",
+        "number": 12,
+        "title": "12. kiegészítendő mondat",
+        "category": "Kiegészítendő",
+        "prompt": "Miért nem végez munkát a tartóerő a lejtőn lecsúszó testen?",
+        "solution": "Lejtőn lecsúszó testen a tartóerő nem végez munkát, mert **merőleges az elmozdulásra** (így a $\\cos(90^{\\circ}) = 0$). `",
+        "figures": []
+      }
+    ]
+  }
+]

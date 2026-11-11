@@ -22,6 +22,10 @@ let activeCourseSubject = "";
 let activeCourseTag = "";
 let courseSearchIndex = new Map();
 let courseNotesByOrder = [];
+let examSets = [];
+let activeExamSubject = "Fizika 1";
+let activeExamType = "ZH1";
+let examReturnFocus = null;
 let activeSuggestionIndex = -1;
 let activeLessonIndex = 0;
 let activeStepIndex = 0;
@@ -49,6 +53,30 @@ async function loadCourseNotes() {
     throw new TypeError("A coursesData.json adatszerkezete nem megfelelő.");
   }
   return notes;
+}
+
+async function loadExamSets() {
+  const response = await fetch("./src/data/examsData.json");
+  if (!response.ok) throw new Error(`A feladatsorok betöltése nem sikerült (${response.status}).`);
+  const exams = await response.json();
+  if (!Array.isArray(exams) || exams.some((exam) =>
+    typeof exam.id !== "string" ||
+    typeof exam.title !== "string" ||
+    typeof exam.subject !== "string" ||
+    typeof exam.type !== "string" ||
+    !Array.isArray(exam.tags) ||
+    !Array.isArray(exam.tasks) ||
+    exam.tasks.some((task) =>
+      typeof task.id !== "string" ||
+      typeof task.title !== "string" ||
+      typeof task.category !== "string" ||
+      typeof task.prompt !== "string" ||
+      typeof task.solution !== "string"
+    )
+  )) {
+    throw new TypeError("Az examsData.json adatszerkezete nem megfelelő.");
+  }
+  return exams;
 }
 
 const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -200,14 +228,6 @@ function renderCourseFilters() {
       ${escapeHTML(name)} <span>${count}</span>
     </button>`;
   }).join("");
-
-  const examFilters = document.querySelector("#course-exam-filters");
-  examFilters.innerHTML = ["zh1", "zh2"].map((tag) => {
-    const count = courseNotes.filter((note) => noteTags(note).some((item) => courseTagKey(item) === tag)).length;
-    return `<button class="course-filter-chip exam-chip" type="button" data-course-tag="${tag}" aria-pressed="${activeCourseTag === tag}" title="${count ? `${count} jegyzet` : "A jelenlegi adatbázisban nincs ilyen címkéjű jegyzet."}">
-      #${tag} <span>${count}</span>
-    </button>`;
-  }).join("");
 }
 
 const courseFilenameOrder = new Map([
@@ -352,6 +372,152 @@ function renderCourse() {
   document.querySelector("#course-result-count").textContent = `${shown.length} / ${courseNotes.length} JEGYZET${activeCourseTag ? ` · #${activeCourseTag}` : ""}`;
   document.querySelector("#course-empty-state").hidden = shown.length > 0;
   grid.hidden = shown.length === 0;
+}
+
+const examTypeLabels = {
+  ZH1: "1. ZH",
+  ZH2: "2. ZH",
+  POTZH: "PótZH",
+  VIZSGA: "Vizsga",
+};
+
+function filteredExamSets() {
+  return examSets.filter((exam) =>
+    (activeExamSubject === "all" || exam.subject === activeExamSubject) &&
+    (activeExamType === "all" || exam.type === activeExamType)
+  );
+}
+
+function renderExamFilters() {
+  const subjectFilters = document.querySelector("#exam-subject-filters");
+  const subjectOptions = [{ name: "all", label: "Összes tárgy" }, ...subjects.map(({ name }) => ({ name, label: name }))];
+  subjectFilters.innerHTML = subjectOptions.map(({ name, label }) => {
+    const count = examSets.filter((exam) => name === "all" || exam.subject === name).length;
+    return `<button class="course-filter-chip" type="button" data-exam-subject="${escapeHTML(name)}" aria-pressed="${activeExamSubject === name}" ${count ? "" : "disabled"}>
+      ${escapeHTML(label)} <span>${count}</span>
+    </button>`;
+  }).join("");
+
+  const typeFilters = document.querySelector("#exam-type-filters");
+  const typeOptions = [{ type: "all", label: "Összes típus" }, ...Object.entries(examTypeLabels).map(([type, label]) => ({ type, label }))];
+  typeFilters.innerHTML = typeOptions.map(({ type, label }) => {
+    const count = examSets.filter((exam) => type === "all" || exam.type === type).length;
+    return `<button class="course-filter-chip" type="button" data-exam-type="${type}" aria-pressed="${activeExamType === type}" ${type !== "all" && !count ? "disabled" : ""}>
+      ${escapeHTML(label)} <span>${count}</span>
+    </button>`;
+  }).join("");
+}
+
+function renderExamSets() {
+  const grid = document.querySelector("#exam-grid");
+  const shown = filteredExamSets();
+  renderExamFilters();
+  grid.innerHTML = shown.map((exam) => {
+    const subject = subjects.find((item) => item.name === exam.subject);
+    return `<article class="exam-card" style="--course-color:${subject?.color ?? "#1756c2"}">
+      <div class="exam-card-meta"><span class="course-subject-badge"><i></i>${escapeHTML(exam.subject)}</span><span class="exam-type-badge">${escapeHTML(examTypeLabels[exam.type] ?? exam.type)}</span></div>
+      <button class="exam-card-title" type="button" data-open-exam="${escapeHTML(exam.id)}">${escapeHTML(exam.title)}</button>
+      <p class="exam-card-semester">${escapeHTML(exam.semester ?? exam.year)}</p>
+      <div class="exam-card-facts"><span><strong>${exam.tasks.length}</strong> feladat</span><span>${escapeHTML(exam.summary ?? "")}</span></div>
+      <div class="course-card-tags" aria-label="Témakörök">${exam.tags.map((tag) => `<span class="course-note-tag">#${escapeHTML(tag.replace(/^#/, ""))}</span>`).join("")}</div>
+      <button class="course-card-open" type="button" data-open-exam="${escapeHTML(exam.id)}">📝 Feladatsor megnyitása <span aria-hidden="true">↗</span></button>
+    </article>`;
+  }).join("");
+  document.querySelector("#exam-result-count").textContent = `${shown.length} / ${examSets.length} FELADATSOR`;
+  document.querySelector("#exam-empty-state").hidden = shown.length > 0;
+  grid.hidden = shown.length === 0;
+}
+
+function setStudyMode(mode) {
+  const showingExams = mode === "exams";
+  document.querySelector("#tanulasi-utvonalak").hidden = showingExams;
+  document.querySelector("#exam-section").hidden = !showingExams;
+  document.querySelectorAll("[data-study-mode]").forEach((tab) => {
+    const selected = tab.dataset.studyMode === mode;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+}
+
+function examFigureMarkup(figures = []) {
+  return figures.map((figure) => {
+    if (typeof figure.src !== "string" || !figure.src.trim()) return "";
+    const safeHtml = window.DOMPurify.sanitize(
+      `<figure class="exam-task-figure"><img src="${escapeHTML(figure.src)}" alt="${escapeHTML(figure.alt ?? "")}" loading="lazy">${figure.caption ? `<figcaption>${escapeHTML(figure.caption)}</figcaption>` : ""}</figure>`,
+      { USE_PROFILES: { html: true } }
+    );
+    return safeHtml;
+  }).join("");
+}
+
+function decorateExamSolution(solution) {
+  solution.querySelectorAll("blockquote").forEach((quote) => quote.classList.add("exam-solution-callout"));
+  solution.querySelectorAll("p, li").forEach((block) => {
+    const label = block.querySelector(":scope > strong")?.textContent.trim() ?? "";
+    if (/^(?:kulcsszámítás|végeredmény|eredmény|következtetés|megoldás)/i.test(label)) {
+      block.classList.add("exam-solution-callout");
+    }
+  });
+  const displayEquations = [...solution.querySelectorAll(".katex-display")];
+  displayEquations.forEach((equation) => {
+    equation.classList.add("exam-key-equation");
+    const tex = equation.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? "";
+    if (/\\(?:mathbf|boxed)\b/.test(tex)) equation.classList.add("exam-final-equation");
+  });
+  displayEquations.at(-1)?.classList.add("exam-final-equation");
+  solution.querySelectorAll(".katex").forEach((equation) => {
+    const tex = equation.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? "";
+    if (/\\(?:mathbf|boxed)\b/.test(tex)) equation.classList.add("exam-final-result");
+  });
+}
+
+function openExamReader(exam, trigger) {
+  if (!exam) return;
+  examReturnFocus = trigger ?? document.activeElement;
+  const subject = subjects.find((item) => item.name === exam.subject);
+  const reader = document.querySelector("#exam-reader");
+  reader.innerHTML = `<div class="exam-reader-shell">
+    <header class="exam-reader-header" style="--subject-color:${subject?.color ?? "var(--blue)"}">
+      <div><span class="course-reader-subject">${escapeHTML(exam.subject)} · ${escapeHTML(examTypeLabels[exam.type] ?? exam.type)}</span>
+        <h2 id="exam-reader-title">${escapeHTML(exam.title)}</h2>
+        <p>${escapeHTML(exam.semester ?? exam.year)} · ${exam.tasks.length} feladat · A kidolgozott megoldások alapértelmezésben rejtve vannak.</p>
+      </div>
+      <button class="course-reader-close" type="button" data-close-exam aria-label="Feladatsor bezárása">×</button>
+    </header>
+    <div class="exam-reader-body">
+      ${exam.tasks.map((task, index) => {
+        const panelId = `exam-solution-${escapeHTML(exam.id)}-${index + 1}`;
+        return `<article class="exam-task">
+          <div class="exam-task-heading"><span>${String(index + 1).padStart(2, "0")}</span><div><small>${escapeHTML(task.category)}</small><h3>${escapeHTML(task.title)}</h3></div></div>
+          <div class="exam-task-prompt">${renderCourseMarkdown(task.prompt)}</div>
+          ${examFigureMarkup(task.figures)}
+          <section class="solution-spoiler">
+            <button class="solution-spoiler-toggle" type="button" aria-expanded="false" aria-controls="${panelId}" data-solution-toggle>
+              <span>Megoldás és levezetés megjelenítése</span><span class="solution-spoiler-icon" aria-hidden="true">+</span>
+            </button>
+            <div class="solution-panel" id="${panelId}" aria-hidden="true" inert>
+              <div class="solution-panel-inner">
+                <div class="exam-solution-content">${renderCourseMarkdown(task.solution)}</div>
+              </div>
+            </div>
+          </section>
+        </article>`;
+      }).join("")}
+    </div>
+  </div>`;
+  reader.setAttribute("aria-labelledby", "exam-reader-title");
+  const problems = reader.querySelectorAll(".exam-task-prompt");
+  problems.forEach((problem) => window.renderMathInElement(problem, {
+    delimiters: [
+      { left: "$$", right: "$$", display: true },
+      { left: "\\[", right: "\\]", display: true },
+      { left: "$", right: "$", display: false },
+      { left: "\\(", right: "\\)", display: false },
+    ],
+    throwOnError: false,
+  }));
+  reader.showModal();
+  reader.querySelector("[data-close-exam]").focus();
 }
 
 function addCodeCopyButtons(root) {
@@ -704,6 +870,16 @@ function init() {
     courseGrid.hidden = false;
     document.querySelector("#course-empty-state").hidden = true;
   });
+  loadExamSets().then((exams) => {
+    examSets = exams;
+    renderExamSets();
+  }).catch((error) => {
+    console.error("A korábbi feladatsorok betöltése nem sikerült:", error);
+    const examGrid = document.querySelector("#exam-grid");
+    examGrid.innerHTML = "<p class=\"notes-error\">A feladatsorok nem érhetők el. Ellenőrizd az examsData.json fájlt és annak formátumát.</p>";
+    examGrid.hidden = false;
+    document.querySelector("#exam-empty-state").hidden = true;
+  });
   document.querySelector("#term-count").textContent = "—";
   renderFilters();
   renderTerms();
@@ -713,6 +889,20 @@ function init() {
   quizSelect.value = quizSubject;
   startQuiz();
   renderCourse();
+  renderExamSets();
+  document.querySelector(".study-mode-switch").addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-study-mode]");
+    if (tab) setStudyMode(tab.dataset.studyMode);
+  });
+  document.querySelector(".study-mode-switch").addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    const tabs = [...document.querySelectorAll("[data-study-mode]")];
+    const currentIndex = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+    const nextIndex = (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    event.preventDefault();
+    tabs[nextIndex].focus();
+    setStudyMode(tabs[nextIndex].dataset.studyMode);
+  });
   window.addEventListener("load", () => {
     typesetCourseMath(document.querySelector("#lesson-panel"));
     if (dialog.open) typesetCourseMath(dialog);
@@ -808,11 +998,22 @@ function init() {
     activeCourseSubject = button.dataset.courseSubject;
     renderCourse();
   });
-  document.querySelector("#course-exam-filters").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-course-tag]");
-    if (!button) return;
-    activeCourseTag = activeCourseTag === button.dataset.courseTag ? "" : button.dataset.courseTag;
-    renderCourse();
+  document.querySelector("#exam-subject-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-exam-subject]");
+    if (!button || button.disabled) return;
+    activeExamSubject = button.dataset.examSubject;
+    renderExamSets();
+  });
+  document.querySelector("#exam-type-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-exam-type]");
+    if (!button || button.disabled) return;
+    activeExamType = button.dataset.examType;
+    renderExamSets();
+  });
+  document.querySelector("#exam-grid").addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-open-exam]");
+    if (!opener) return;
+    openExamReader(examSets.find((exam) => exam.id === opener.dataset.openExam), opener);
   });
   document.querySelector("#course-grid").addEventListener("click", (event) => {
     const tag = event.target.closest("[data-note-tag]");
@@ -856,6 +1057,36 @@ function init() {
   });
   courseReader.addEventListener("close", () => {
     if (readerReturnFocus?.isConnected) readerReturnFocus.focus();
+  });
+  const examReader = document.querySelector("#exam-reader");
+  examReader.addEventListener("click", (event) => {
+    if (event.target === examReader || event.target.closest("[data-close-exam]")) {
+      examReader.close();
+      return;
+    }
+    const toggle = event.target.closest("[data-solution-toggle]");
+    if (!toggle) return;
+    const panel = document.getElementById(toggle.getAttribute("aria-controls"));
+    const expanded = toggle.getAttribute("aria-expanded") !== "true";
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.querySelector("span").textContent = expanded ? "Megoldás elrejtése" : "Megoldás és levezetés megjelenítése";
+    panel.setAttribute("aria-hidden", String(!expanded));
+    panel.toggleAttribute("inert", !expanded);
+    if (!expanded || panel.dataset.mathRendered === "true") return;
+    window.renderMathInElement(panel, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "\\[", right: "\\]", display: true },
+        { left: "$", right: "$", display: false },
+        { left: "\\(", right: "\\)", display: false },
+      ],
+      throwOnError: false,
+    });
+    decorateExamSolution(panel);
+    panel.dataset.mathRendered = "true";
+  });
+  examReader.addEventListener("close", () => {
+    if (examReturnFocus?.isConnected) examReturnFocus.focus();
   });
   document.querySelector("#lesson-list").addEventListener("click", (event) => {
     const tab = event.target.closest("[data-lesson]");
