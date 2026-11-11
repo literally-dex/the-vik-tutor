@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <meta name="description" content="Moduláris tanulási útvonalak, interaktív szótár és vizsgafelkészítő eszközök a BME VIK első féléves hallgatóinak." />
+    <title>BME VIK 1. Féléves Oktatási Portál és Interaktív Szótár</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism-tomorrow.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        startup: { typeset: false }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/marked@15.0.7/lib/marked.umd.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/prism.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-c.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Ugrás a tartalomra</a>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="BME VIK Oktatási Portál – főoldal">
+        <span class="brand-mark">V<span>.</span></span>
+        <span class="brand-name">BME VIK <span>OKTATÁSI PORTÁL</span></span>
+      </a>
+      <div class="header-search-wrap">
+        <label class="header-search" for="course-search-input">
+          <span aria-hidden="true">⌕</span>
+          <input id="course-search-input" type="search" placeholder="Jegyzet keresése…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="course-search-suggestions" />
+          <kbd>⌘ K</kbd>
+        </label>
+        <div id="course-search-suggestions" class="course-search-suggestions" role="listbox" aria-label="Jegyzettalálatok" hidden></div>
+      </div>
+      <nav class="top-nav" aria-label="Fő navigáció">
+        <a class="nav-link active" href="#tanulasi-utvonalak">Tananyagok</a>
+        <a class="nav-link" href="#szotar">Szótár</a>
+        <a class="nav-link" href="#kviz">Gyakorlás</a>
+      </nav>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Sötét téma bekapcsolása" title="Téma váltása">
+        <span id="theme-icon" aria-hidden="true">☾</span>
+        <span class="theme-label">Téma</span>
+      </button>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> ELSŐ FÉLÉV · TANULÁSI TÉR</div>
+          <h1 id="hero-title">A fogalmak mögötti<br /><span>összefüggések.</span></h1>
+          <p>Értsd meg, kapcsold össze, használd. Szakmai szótár és interaktív tananyag a BME VIK első félévéhez.</p>
+          <a class="hero-cta" href="#tanulasi-utvonalak">Jegyzetek felfedezése <span aria-hidden="true">↘</span></a>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="orbit-core"><span>VIK</span><small>01</small></div>
+          <span class="orbit-label label-a">logika</span><span class="orbit-label label-b">analízis</span>
+          <span class="orbit-label label-c">fizika</span><span class="orbit-label label-d">kód</span>
+          <span class="orbit-node node-a"></span><span class="orbit-node node-b"></span><span class="orbit-node node-c"></span>
+        </div>
+        <div class="hero-meta"><span>01 — 05 TANTÁRGY</span><span>FOGALOMTÓL A MEGÉRTÉSIG</span></div>
+      </section>
+
+      <section class="stats-strip" aria-label="Tananyag áttekintése">
+        <div><strong id="term-count">—</strong><span>jegyzet</span></div>
+        <div><strong id="study-subject-count">—</strong><span>tantárgy</span></div>
+        <div><strong>∞</strong><span>kapcsolat</span></div>
+        <div class="stats-note">Egy szemeszter,<br />közös gondolkodásmód.</div>
+      </section>
+
+      <section id="tanulasi-utvonalak" class="content-section course-section">
+        <div class="section-heading course-heading">
+          <div><div class="eyebrow">01 / KIDOLGOZOTT TANANYAGOK</div><h2>Tanulj a jegyzetekből.</h2></div>
+          <p>Keress a jegyzetek címében, címkéiben vagy teljes szövegében. Nyisd meg a kidolgozást, és navigálj a fejezetek között.</p>
+        </div>
+        <div class="course-search-panel">
+          <div class="course-filter-group">
+            <span class="filter-label">TANTÁRGY</span>
+            <nav id="course-subject-filters" class="course-filter-chips" aria-label="Jegyzetek szűrése tantárgy szerint"></nav>
+          </div>
+          <div class="course-filter-group exam-filter-group">
+            <span class="filter-label">ZH-GYORSFILTER</span>
+            <nav id="course-exam-filters" class="course-filter-chips" aria-label="Jegyzetek szűrése ZH szerint"></nav>
+          </div>
+          <div class="course-result-row">
+            <span id="course-result-count" class="result-count" aria-live="polite"></span>
+            <button id="clear-course-filters" class="text-button" type="button">Szűrők törlése</button>
+          </div>
+        </div>
+        <div id="course-grid" class="course-card-grid" aria-live="polite"></div>
+        <div id="course-empty-state" class="course-empty-state" hidden>
+          <span aria-hidden="true">⌕</span><h3>Nincs találat</h3><p>Próbálj más keresőszót, címkét vagy tantárgyszűrőt.</p>
+        </div>
+      </section>
+
+      <dialog id="course-reader" class="course-reader-dialog" aria-label="Jegyzet részletes levezetése"></dialog>
+
+      <section id="szotar" class="content-section dictionary-section">
+        <div class="section-heading">
+          <div><div class="eyebrow">02 / FOGALOMTÁR</div><h2>Mit keresel?</h2></div>
+          <p>Keress rá egy fogalomra, vagy indulj el valamelyik tárgy mentén.</p>
+        </div>
+        <div class="search-panel">
+          <label class="search-box" for="search-input">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Fogalom keresése cím, kategória vagy leírás alapján…" autocomplete="off" />
+          </label>
+          <div class="filter-row">
+            <div class="subject-filters" id="subject-filters" role="group" aria-label="Szűrés tantárgy szerint"></div>
+            <span class="result-count" id="result-count" aria-live="polite"></span>
+          </div>
+        </div>
+        <div id="dictionary-grid" class="dictionary-grid" aria-live="polite"></div>
+        <div class="empty-state" id="empty-state" hidden>
+          <span aria-hidden="true">⌕</span><h3>Nincs ilyen fogalom</h3><p>Próbálj más keresőszót vagy válassz másik tantárgyat.</p>
+          <button type="button" class="text-button" id="clear-search">Szűrők törlése ↗</button>
+        </div>
+      </section>
+
+      <section id="tananyag" class="content-section learning-section">
+        <div class="section-heading">
+          <div><div class="eyebrow">03 / GYORS PÉLDA</div><h2>Tanulj lépésről lépésre.</h2></div>
+          <p>Egy gondolatmenet, végigvezetve. Válassz témát, és haladj a saját tempódban.</p>
+        </div>
+        <div class="lesson-shell">
+          <aside class="lesson-sidebar">
+            <div class="lesson-side-label">TANULÓMODULOK</div>
+            <div id="lesson-list" class="lesson-list" role="tablist" aria-label="Tanulómodulok"></div>
+            <div class="lesson-side-note"><span class="side-note-mark">✳</span><p>A megértés nem a képletnél kezdődik, hanem a jó kérdésnél.</p></div>
+          </aside>
+          <article class="lesson-content" id="lesson-panel" aria-live="polite"></article>
+        </div>
+      </section>
+
+      <section id="kviz" class="content-section quiz-section">
+        <div class="section-heading">
+          <div><div class="eyebrow">04 / ÖNELLENŐRZÉS</div><h2>Próbáld ki, mit tudsz.</h2></div>
+          <p>Rövid kérdések, azonnali visszajelzéssel. A hibákból is lehet tanulni.</p>
+        </div>
+        <div class="quiz-shell">
+          <div class="quiz-topline"><span class="quiz-tag">GYORS KÖR</span><label for="quiz-subject">TANTÁRGY</label><select id="quiz-subject" aria-label="Kvíz tantárgy kiválasztása"></select></div>
+          <div class="quiz-progress"><div class="progress-track"><span id="quiz-progress-bar"></span></div><span id="quiz-progress-text">—</span></div>
+          <div id="quiz-content" class="quiz-content"></div>
+        </div>
+      </section>
+
+      <section class="connection-banner">
+        <div class="connection-symbol" aria-hidden="true">↗</div>
+        <div><div class="eyebrow">A TANTÁRGYAK KÖZÖTT</div><h2>Egy rendszer részei.</h2><p>A gráfok hálózata, a programozás adatszerkezetei, a fizika vektorai — az első félév fogalmai egymásra épülnek.</p></div>
+        <a href="#szotar" class="banner-link">Kapcsolatok felfedezése <span aria-hidden="true">→</span></a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a class="brand footer-brand" href="#"><span class="brand-mark">V<span>.</span></span><span class="brand-name">BME VIK <span>OKTATÁSI PORTÁL</span></span></a>
+      <span>Tanulási segédlet · BME Villamosmérnöki és Informatikai Kar</span>
+      <a href="#main-content" class="back-top">Vissza az elejére ↑</a>
+    </footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
