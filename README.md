@@ -10,5 +10,5 @@ A jegyzetek Markdown-rendereléséhez Marked és DOMPurify, a képletekhez KaTeX
 
 Ezen a linken keresztül eléred a weboldalt, sok sikert és jó tanulást!
 
-*literally-dex.github.io/the-vik-tutor/*
+[Túlélési Kisokos](literally-dex.github.io/the-vik-tutor/)
 
