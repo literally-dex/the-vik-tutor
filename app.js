@@ -1,4 +1,4 @@
-import { subjects, terms, lessons, quizzes } from "./dictionaryData.js";
+import { subjects, terms } from "./dictionaryData.js";
 import { vectorTerms } from "./vectorTopic.js";
 import { physicsTerms } from "./physicsTopics.js";
 
@@ -22,18 +22,14 @@ let activeCourseSubject = "";
 let activeCourseTag = "";
 let courseSearchIndex = new Map();
 let courseNotesByOrder = [];
+let keyFormulas = [];
+let activeFormulaSubject = "all";
+let activeFormulaTopic = "all";
 let examSets = [];
 let activeExamSubject = "Fizika 1";
 let activeExamType = "ZH1";
 let examReturnFocus = null;
 let activeSuggestionIndex = -1;
-let activeLessonIndex = 0;
-let activeStepIndex = 0;
-let quizSubject = "digitalis";
-let quizItems = [];
-let quizIndex = 0;
-let quizScore = 0;
-let hasAnswered = false;
 let toastTimeout;
 let dialogReturnFocus = null;
 let readerReturnFocus = null;
@@ -44,7 +40,7 @@ async function loadCourseNotes() {
   if (!response.ok) throw new Error(`A jegyzetadatok betöltése nem sikerült (${response.status}).`);
   const notes = await response.json();
   if (!Array.isArray(notes) || notes.some((note) =>
-    typeof note.title !== "string" ||
+    !(typeof note.title === "string" || (Array.isArray(note.title) && note.title.length >= 2 && note.title.every((part) => typeof part === "string"))) ||
     typeof note.subject !== "string" ||
     !Array.isArray(note.tags) ||
     typeof note.summary !== "string" ||
@@ -52,7 +48,44 @@ async function loadCourseNotes() {
   )) {
     throw new TypeError("A coursesData.json adatszerkezete nem megfelelő.");
   }
-  return notes;
+  return notes
+    .map(normalizeCourseNote)
+    .filter((note) => !isExamNote(note));
+}
+
+function parseLectureHeading(value) {
+  const lines = (Array.isArray(value) ? value : String(value ?? "").split(/\r?\n/))
+    .flatMap((line) => String(line).split(/\r?\n/))
+    .map((line) => line.replace(/^#{1,6}\s*/, "").trim())
+    .filter(Boolean);
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index].match(/^(\d+)\.?\s*(?:előadás|lecture|ea)\b\s*(?:[:–—-]\s*(.*))?$/i);
+    if (match) {
+      return {
+        label: `${match[1]}. Előadás`,
+        title: match[2]?.trim() || lines[index + 1] || "",
+      };
+    }
+    const numberedTitle = lines[index].match(/^(\d+)\.\s+(.+)$/);
+    if (numberedTitle) {
+      return { label: `${numberedTitle[1]}. Előadás`, title: numberedTitle[2].trim() };
+    }
+  }
+  return null;
+}
+
+function normalizeCourseNote(note) {
+  const titleParts = Array.isArray(note.title) ? note.title : [note.title];
+  const titleHeading = parseLectureHeading(titleParts);
+  const markdown = note.fullContent.replace(/^---\r?\n[\s\S]*?\r?\n---\s*/, "");
+  const markdownHeadings = [...markdown.matchAll(/^#{1,6}\s+.+$/gm)].map(([heading]) => heading);
+  const markdownHeading = parseLectureHeading(markdownHeadings);
+  const lecture = titleHeading ?? markdownHeading;
+  const title = titleHeading?.title
+    || titleParts.slice(titleHeading ? 1 : 0).join(" ").trim()
+    || markdownHeading?.title
+    || "";
+  return { ...note, title, lectureLabel: lecture?.label ?? "" };
 }
 
 async function loadExamSets() {
@@ -230,6 +263,83 @@ function renderCourseFilters() {
   }).join("");
 }
 
+function extractKeyFormulas(notes) {
+  const formulas = [];
+  notes.forEach((note) => {
+    const markdown = stripMindMapSections(note.fullContent
+      .replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, ""));
+    let topic = "Általános";
+    const noteFormulas = [];
+    const entries = /^(#{2,3})\s+(.+?)\s*$|^[ \t]*(?:(?:[*+-]|\d+[.)])[ \t]*)?<!--\s*key-formula\s*-->[ \t]*(?:\r?\n[ \t]*)?(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\])/gim;
+    for (const match of markdown.matchAll(entries)) {
+      if (match[2]) {
+        topic = match[2].trim();
+      } else if (match[3]) {
+        noteFormulas.push({ note, topic, math: match[3].trim(), position: match.index });
+      }
+    }
+    const headings = [...markdown.matchAll(/^(#{2,3})\s+(.+?)\s*$/gm)];
+    const inlineListMarkers = /^[ \t]*(?:[*+-]|\d+[.)])[ \t]*<!--\s*key-formula\s*-->[ \t]*\r?\n((?:[ \t]+(?:[*+-]|\d+[.)])[ \t]+[^\r\n]*(?:\r?\n|$))+)/gim;
+    for (const match of markdown.matchAll(inlineListMarkers)) {
+      const currentTopic = headings.filter((heading) => heading.index < match.index).at(-1)?.[2].trim() ?? "Általános";
+      const inlineMath = /(^|[^$])\$([^$\r\n]+)\$(?!\$)/g;
+      for (const equation of match[1].matchAll(inlineMath)) {
+        noteFormulas.push({ note, topic: currentTopic, math: `$${equation[2].trim()}$`, position: match.index });
+      }
+    }
+    noteFormulas.sort((a, b) => a.position - b.position);
+    formulas.push(...noteFormulas.map(({ position, ...formula }) => formula));
+  });
+  return formulas;
+}
+
+function renderFormulaCollection() {
+  const subjectsWithFormulas = [...new Set(keyFormulas.map(({ note }) => note.subject))];
+  if (activeFormulaSubject !== "all" && !subjectsWithFormulas.includes(activeFormulaSubject)) {
+    activeFormulaSubject = "all";
+  }
+  const subjectFilters = document.querySelector("#formula-subject-filters");
+  subjectFilters.innerHTML = [{ name: "all", label: "Minden tárgy" }, ...subjectsWithFormulas.map((name) => ({ name, label: name }))]
+    .map(({ name, label }) => {
+      const count = keyFormulas.filter(({ note }) => name === "all" || note.subject === name).length;
+      return `<button class="course-filter-chip" type="button" data-formula-subject="${escapeHTML(name)}" aria-pressed="${activeFormulaSubject === name}">${escapeHTML(label)} <span>${count}</span></button>`;
+    }).join("");
+
+  const subjectFormulas = keyFormulas.filter(({ note }) => activeFormulaSubject === "all" || note.subject === activeFormulaSubject);
+  const topics = [...new Set(subjectFormulas.map(({ topic }) => topic))];
+  if (activeFormulaTopic !== "all" && !topics.includes(activeFormulaTopic)) activeFormulaTopic = "all";
+  document.querySelector("#formula-topic-filters").innerHTML = [{ name: "all", label: "Minden témakör" }, ...topics.map((name) => ({ name, label: name }))]
+    .map(({ name, label }) => {
+      const count = subjectFormulas.filter(({ topic }) => name === "all" || topic === name).length;
+      return `<button class="course-filter-chip" type="button" data-formula-topic="${escapeHTML(name)}" aria-pressed="${activeFormulaTopic === name}">${escapeHTML(label)} <span>${count}</span></button>`;
+    }).join("");
+
+  const shown = subjectFormulas.filter(({ topic }) => activeFormulaTopic === "all" || topic === activeFormulaTopic);
+  const grid = document.querySelector("#formula-grid");
+  grid.innerHTML = shown.map(({ note, topic, math }) => {
+    const subject = subjects.find((item) => item.name === note.subject);
+    return `<article class="formula-card" style="--course-color:${subject?.color ?? "#1756c2"}">
+      <div class="formula-card-meta"><span>${escapeHTML(note.subject)}</span><span>${escapeHTML(topic)}</span></div>
+      <div class="formula-card-equation">${renderCourseMarkdown(math)}</div>
+      <button class="formula-card-source" type="button" data-open-course="${escapeHTML(note.title)}">${escapeHTML(note.lectureLabel ? `${note.lectureLabel} · ` : "")}${escapeHTML(note.title)} <span aria-hidden="true">↗</span></button>
+    </article>`;
+  }).join("");
+  grid.querySelectorAll(".formula-card-equation").forEach((equation) => {
+    window.renderMathInElement(equation, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "\\[", right: "\\]", display: true },
+        { left: "$", right: "$", display: false },
+        { left: "\\(", right: "\\)", display: false },
+      ],
+      throwOnError: false,
+    });
+  });
+  document.querySelector("#formula-result-count").textContent = `${shown.length} KIEMELT KÉPLET`;
+  document.querySelector("#formula-empty-state").hidden = shown.length > 0;
+  grid.hidden = shown.length === 0;
+}
+
 const courseFilenameOrder = new Map([
   ["analizis", [
     "Matematikai logika és halmazalgebra alapjai",
@@ -263,7 +373,10 @@ function subjectOrderKey(subject) {
 }
 
 function orderedNoteNumber(note) {
-  return noteOrder.get(`${subjectOrderKey(note.subject)}:${note.title}`) ?? Number.MAX_SAFE_INTEGER;
+  const mappedOrder = noteOrder.get(`${subjectOrderKey(note.subject)}:${note.title}`);
+  if (mappedOrder !== undefined) return mappedOrder;
+  const lectureNumber = note.lectureLabel.match(/^\s*(\d+)/)?.[1];
+  return lectureNumber ? Number(lectureNumber) : Number.MAX_SAFE_INTEGER;
 }
 
 function noteTags(note) {
@@ -272,6 +385,16 @@ function noteTags(note) {
   if (!tagsBlock) return note.tags.map((tag) => String(tag).replace(/^#/, ""));
   return [...tagsBlock[1].matchAll(/^[ \t]+-[ \t]*(.+?)\s*$/gm)]
     .map(([, tag]) => tag.replace(/^['"]|['"]$/g, "").replace(/^#/, ""));
+}
+
+function isExamNote(note) {
+  const frontmatter = note.fullContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const type = frontmatter?.[1].match(/^type:\s*["']?([^"'\r\n]+)["']?/im)?.[1].trim();
+  if (type && /^(?:exam|exam[-_ ]?set|zh\d*|pótzh|potzh|vizsga)$/i.test(type)) return true;
+
+  const examTag = /^(?:exam|zh\d*|pótzh|potzh|vizsga)$/i;
+  if (noteTags(note).some((tag) => examTag.test(tag.trim()))) return true;
+  return /^(?:\d{4}[.\s-]*)?(?:(?:őszi|tavaszi)\s+)?(?:zárthelyi|pótzh|vizsga)\b/i.test(note.title);
 }
 
 function plainCourseContent(note) {
@@ -332,7 +455,7 @@ function renderCourseSuggestions() {
       const subject = subjects.find((item) => item.name === note.subject);
       return `<button class="course-search-suggestion" type="button" role="option" id="course-search-option-${index}" aria-selected="false" data-search-note="${escapeHTML(note.title)}">
         <span class="suggestion-subject" style="--course-color:${subject?.color ?? "var(--blue)"}">${escapeHTML(note.subject)}</span>
-        <strong>${escapeHTML(note.title)}</strong>
+        <strong>${note.lectureLabel ? `${escapeHTML(note.lectureLabel)} · ` : ""}${escapeHTML(note.title)}</strong>
         <span class="suggestion-snippet">${highlightSearchMatch(courseSearchSnippet(note, query), query)}</span>
       </button>`;
     }).join("")}
@@ -362,7 +485,7 @@ function renderCourse() {
     const color = subject?.color ?? "#1756c2";
     const order = orderedNoteNumber(note);
     return `<article class="course-card" style="--course-color:${color}">
-      <div class="course-card-meta"><span class="course-subject-badge"><i></i>${escapeHTML(note.subject)}</span><span class="course-card-number">${order !== Number.MAX_SAFE_INTEGER ? String(order).padStart(2, "0") : "—"}</span></div>
+      <div class="course-card-meta"><span class="course-subject-badge"><i></i>${escapeHTML(note.subject)}</span><span class="course-card-number">${escapeHTML(note.lectureLabel || (order !== Number.MAX_SAFE_INTEGER ? String(order).padStart(2, "0") : "—"))}</span></div>
       <h3><button class="course-card-title" type="button" data-open-course="${escapeHTML(note.title)}">${escapeHTML(note.title)}</button></h3>
       <p class="course-card-summary">${escapeHTML(note.summary)}</p>
       <div class="course-card-tags" aria-label="Címkék">${noteTags(note).map((tag) => `<button class="course-note-tag" type="button" data-note-tag="${escapeHTML(tag)}" aria-pressed="${activeCourseTag === courseTagKey(tag)}">#${escapeHTML(tag)}</button>`).join("") || "<span class=\"course-no-tags\">Nincs címke</span>"}</div>
@@ -429,9 +552,9 @@ function renderExamSets() {
 }
 
 function setStudyMode(mode) {
-  const showingExams = mode === "exams";
-  document.querySelector("#tanulasi-utvonalak").hidden = showingExams;
-  document.querySelector("#exam-section").hidden = !showingExams;
+  document.querySelectorAll("[data-study-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.studyPanel !== mode;
+  });
   document.querySelectorAll("[data-study-mode]").forEach((tab) => {
     const selected = tab.dataset.studyMode === mode;
     tab.setAttribute("aria-selected", String(selected));
@@ -559,23 +682,34 @@ function renderCourseMarkdown(markdown) {
   return parsed.body.innerHTML;
 }
 
+function markKeyFormulaBlocks(markdown) {
+  const displayFormulas = markdown.replace(
+    /^[ \t]*(?:(?:[*+-]|\d+[.)])[ \t]*)?<!--\s*key-formula\s*-->[ \t]*(?:\r?\n[ \t]*)?(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\])/gim,
+    '<div class="reader-key-formula">$1</div>'
+  );
+  return displayFormulas.replace(
+    /^[ \t]*(?:[*+-]|\d+[.)])[ \t]*<!--\s*key-formula\s*-->[ \t]*\r?\n((?:[ \t]+(?:[*+-]|\d+[.)])[ \t]+[^\r\n]*(?:\r?\n|$))+)/gim,
+    (_, list) => list.replace(/(^|[^$])\$([^$\r\n]+)\$(?!\$)/g, '$1<span class="reader-key-formula">$$$2$$</span>')
+  );
+}
+
 function prepareCourseReader(note) {
   const markdown = window.marked;
   const purifier = window.DOMPurify;
   if (!markdown?.parse || !purifier?.sanitize || !window.renderMathInElement) {
     throw new Error("A jegyzet megjelenítéséhez szükséges Markdown- vagy KaTeX-könyvtár nem érhető el.");
   }
-  const content = stripMindMapSections(note.fullContent
+  const content = markKeyFormulaBlocks(stripMindMapSections(note.fullContent
     .replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "")
   )
     .replace(/\[cite:\s*[\d,\s]+\]/g, "")
-    .replace(/!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target);
+    .replace(/!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target));
   const safeHtml = renderCourseMarkdown(content);
   const subject = subjects.find((item) => item.name === note.subject);
   const reader = document.querySelector("#course-reader");
   reader.innerHTML = `<div class="course-reader-shell">
     <header class="course-reader-header" style="--subject-color:${subject?.color ?? "var(--blue)"}">
-      <div class="course-reader-heading"><span class="course-reader-subject">${escapeHTML(note.subject)}</span><h2 id="course-reader-title">${escapeHTML(note.title)}</h2><p>${escapeHTML(note.summary)}</p>
+      <div class="course-reader-heading"><span class="course-reader-subject">${escapeHTML(note.subject)}${note.lectureLabel ? ` · ${escapeHTML(note.lectureLabel)}` : ""}</span><h2 id="course-reader-title">${escapeHTML(note.title)}</h2><p>${escapeHTML(note.summary)}</p>
         <div class="course-card-tags">${noteTags(note).map((tag) => `<span class="course-note-tag">#${escapeHTML(tag)}</span>`).join("")}</div>
       </div>
       <button class="course-reader-close" type="button" aria-label="Jegyzet bezárása">×</button>
@@ -631,6 +765,15 @@ function decorateNoteHighlights(article) {
       ?? "";
     const rule = highlightRules.find(({ pattern }) => pattern.test(label));
     if (rule) block.classList.add("reader-highlight", rule.className);
+  });
+  article.querySelectorAll("blockquote").forEach((block) => {
+    const firstParagraph = block.querySelector("p");
+    if (!firstParagraph || !/^\s*\[!(?:critical|important)\]/i.test(firstParagraph.textContent)) return;
+    firstParagraph.innerHTML = firstParagraph.innerHTML.replace(/^\s*\[!(?:critical|important)\]\s*/i, "");
+    const label = document.createElement("strong");
+    label.textContent = "Kritikus: ";
+    firstParagraph.prepend(label);
+    block.classList.add("reader-highlight", "reader-highlight-critical");
   });
   [...article.querySelectorAll("h2, h3")].forEach((heading) => {
     if (!/(?:zh|vizsga).*(?:csapd|hib)|(?:csapd|hib).*(?:zh|vizsga)/i.test(heading.textContent)) return;
@@ -759,83 +902,6 @@ function openTerm(term) {
   dialog.querySelector(".dialog-close").focus();
 }
 
-function renderLesson() {
-  const selected = lessons[activeLessonIndex];
-  const subject = subjectById.get(selected.subject);
-  document.querySelector("#lesson-list").innerHTML = lessons.map((lesson, index) => {
-    return `<button class="lesson-tab" id="lesson-tab-${index}" type="button" role="tab" aria-selected="${index === activeLessonIndex}" aria-controls="lesson-panel" tabindex="${index === activeLessonIndex ? 0 : -1}" data-lesson="${index}">
-      <span class="tab-number">0${index + 1}</span><span>${escapeHTML(lesson.term)}</span>
-    </button>`;
-  }).join("");
-  const step = selected.steps[activeStepIndex];
-  const lessonEquation = ["analizis", "digitalis", "fizika"].includes(selected.subject)
-    ? `\\[${escapeHTML(selected.equation)}\\]`
-    : escapeHTML(selected.equation);
-  document.querySelector("#lesson-panel").setAttribute("aria-labelledby", `lesson-tab-${activeLessonIndex}`);
-  document.querySelector("#lesson-panel").innerHTML = `
-    <div class="lesson-meta"><span class="subject-dot" style="--subject-color:${subject.color}"></span>${escapeHTML(subject.name)} <span>·</span> PÉLDA ${String(activeStepIndex + 1).padStart(2, "0")} / ${String(selected.steps.length).padStart(2, "0")}</div>
-    <h3>${escapeHTML(selected.title)}</h3>
-    <p class="lesson-intro">${escapeHTML(selected.intro)}</p>
-    <div class="lesson-step">
-      <div class="step-top"><span>${activeStepIndex + 1}</span> LÉPÉS</div>
-      <strong>${escapeHTML(step.title)}</strong><p>${escapeHTML(step.text)}</p>
-    </div>
-    <div class="lesson-equation">${lessonEquation}</div>
-    <div class="lesson-controls">
-      <div class="lesson-dots" aria-label="${activeStepIndex + 1}. lépés a ${selected.steps.length}-ből">
-        ${selected.steps.map((_, index) => `<span class="${index === activeStepIndex ? "active" : ""}"></span>`).join("")}
-      </div>
-      <div>
-        ${activeStepIndex > 0 ? `<button class="lesson-next lesson-prev" type="button">← Előző</button>` : ""}
-        <button class="lesson-next" type="button" data-next>${activeStepIndex === selected.steps.length - 1 ? "Következő modul →" : "Következő lépés →"}</button>
-      </div>
-    </div>`;
-  typesetCourseMath(document.querySelector("#lesson-panel"));
-}
-
-function startQuiz(subjectId = quizSubject) {
-  quizSubject = subjectId;
-  quizItems = quizzes.filter((question) => question.subject === quizSubject);
-  quizIndex = 0;
-  quizScore = 0;
-  hasAnswered = false;
-  renderQuiz();
-}
-
-function renderQuiz() {
-  const question = quizItems[quizIndex];
-  const progress = quizItems.length ? Math.round((quizIndex / quizItems.length) * 100) : 0;
-  document.querySelector("#quiz-progress-bar").style.width = `${progress}%`;
-  document.querySelector("#quiz-progress-text").textContent = `${String(Math.min(quizIndex + 1, quizItems.length)).padStart(2, "0")} / ${String(quizItems.length).padStart(2, "0")}`;
-  const content = document.querySelector("#quiz-content");
-  if (!question) {
-    document.querySelector("#quiz-progress-bar").style.width = "100%";
-    content.innerHTML = `<div class="quiz-finish"><div class="finish-score">${quizScore} / ${quizItems.length}</div>
-      <h3>${quizScore === quizItems.length ? "Hibátlan kör!" : quizScore >= quizItems.length / 2 ? "Jó munka, haladsz!" : "Már tudod, mit érdemes átismételni."}</h3>
-      <p>${escapeHTML(subjectById.get(quizSubject).name)} · ${quizItems.length} kérdés megválaszolva</p>
-      <button class="quiz-restart" type="button">Új kör indítása ↗</button></div>`;
-    return;
-  }
-  const subject = subjectById.get(question.subject);
-  content.innerHTML = `
-    <div class="question-label">${escapeHTML(subject.name.toLocaleUpperCase("hu"))} · ${String(quizIndex + 1).padStart(2, "0")}. KÉRDÉS</div>
-    <h3>${escapeHTML(question.question)}</h3>
-    <div class="answer-list">${question.options.map((option, index) => {
-      let state = "";
-      if (hasAnswered && index === question.answer) state = " correct";
-      else if (hasAnswered && index === selectedAnswer) state = " incorrect";
-      return `<button class="answer-option${state}" type="button" data-answer="${index}" ${hasAnswered ? "disabled" : ""}>
-        <span class="option-letter">${String.fromCharCode(65 + index)}</span>${escapeHTML(option)}
-      </button>`;
-    }).join("")}</div>
-    ${hasAnswered ? `<div class="answer-feedback ${selectedAnswer === question.answer ? "good" : "bad"}" role="status" tabindex="-1"><strong>${selectedAnswer === question.answer ? "Helyes!" : "Nem egészen."}</strong> ${escapeHTML(question.explanation)}</div>` : ""}
-    <div class="quiz-actions"><span class="score-label">Eddigi pontszám: <strong>${quizScore}</strong></span>
-      <button class="quiz-next" type="button" data-quiz-next ${hasAnswered ? "" : "disabled"}>${quizIndex === quizItems.length - 1 ? "Eredmény" : "Következő kérdés"} →</button>
-    </div>`;
-}
-
-let selectedAnswer = -1;
-
 function showToast(message) {
   const toast = document.querySelector("#toast");
   toast.textContent = message;
@@ -856,12 +922,14 @@ function init() {
   loadCourseNotes().then((notes) => {
     courseNotes = notes;
     courseNotesByOrder = [...notes].sort((a, b) => orderedNoteNumber(a) - orderedNoteNumber(b));
+    keyFormulas = extractKeyFormulas(notes);
     activeCourseSubject = notes[0]?.subject ?? "";
     prepareCourseSearchIndex(notes);
     addNoteGlossaryTerms(notes);
     document.querySelector("#term-count").textContent = String(notes.length).padStart(2, "0");
     document.querySelector("#study-subject-count").textContent = String(new Set(notes.map((note) => note.subject)).size).padStart(2, "0");
     renderCourse();
+    renderFormulaCollection();
     renderTerms();
   }).catch((error) => {
     console.error("A tananyagok betöltése nem sikerült:", error);
@@ -883,12 +951,8 @@ function init() {
   document.querySelector("#term-count").textContent = "—";
   renderFilters();
   renderTerms();
-  renderLesson();
-  const quizSelect = document.querySelector("#quiz-subject");
-  quizSelect.innerHTML = subjects.map((subject) => `<option value="${subject.id}">${escapeHTML(subject.name)}</option>`).join("");
-  quizSelect.value = quizSubject;
-  startQuiz();
   renderCourse();
+  renderFormulaCollection();
   renderExamSets();
   document.querySelector(".study-mode-switch").addEventListener("click", (event) => {
     const tab = event.target.closest("[data-study-mode]");
@@ -904,7 +968,6 @@ function init() {
     setStudyMode(tabs[nextIndex].dataset.studyMode);
   });
   window.addEventListener("load", () => {
-    typesetCourseMath(document.querySelector("#lesson-panel"));
     if (dialog.open) typesetCourseMath(dialog);
   }, { once: true });
   try { setTheme(localStorage.getItem("vik-theme") === "dark"); } catch { setTheme(false); }
@@ -998,6 +1061,19 @@ function init() {
     activeCourseSubject = button.dataset.courseSubject;
     renderCourse();
   });
+  document.querySelector("#formula-subject-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-formula-subject]");
+    if (!button) return;
+    activeFormulaSubject = button.dataset.formulaSubject;
+    activeFormulaTopic = "all";
+    renderFormulaCollection();
+  });
+  document.querySelector("#formula-topic-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-formula-topic]");
+    if (!button) return;
+    activeFormulaTopic = button.dataset.formulaTopic;
+    renderFormulaCollection();
+  });
   document.querySelector("#exam-subject-filters").addEventListener("click", (event) => {
     const button = event.target.closest("[data-exam-subject]");
     if (!button || button.disabled) return;
@@ -1024,6 +1100,10 @@ function init() {
     }
     const card = event.target.closest(".course-card");
     const opener = event.target.closest("[data-open-course]") ?? card?.querySelector("[data-open-course]");
+    if (opener) openCourseReader(courseNotes.find((note) => note.title === opener.dataset.openCourse), opener);
+  });
+  document.querySelector("#formula-grid").addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-open-course]");
     if (opener) openCourseReader(courseNotes.find((note) => note.title === opener.dataset.openCourse), opener);
   });
   document.querySelector("#clear-course-filters").addEventListener("click", () => {
@@ -1087,46 +1167,6 @@ function init() {
   });
   examReader.addEventListener("close", () => {
     if (examReturnFocus?.isConnected) examReturnFocus.focus();
-  });
-  document.querySelector("#lesson-list").addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-lesson]");
-    if (!tab) return;
-    activeLessonIndex = Number(tab.dataset.lesson);
-    activeStepIndex = 0;
-    renderLesson();
-    document.querySelector(`#lesson-tab-${activeLessonIndex}`).focus();
-  });
-  document.querySelector("#lesson-panel").addEventListener("click", (event) => {
-    if (event.target.closest(".lesson-prev")) activeStepIndex = Math.max(0, activeStepIndex - 1);
-    else if (event.target.closest("[data-next]")) {
-      if (activeStepIndex < lessons[activeLessonIndex].steps.length - 1) activeStepIndex++;
-      else { activeLessonIndex = (activeLessonIndex + 1) % lessons.length; activeStepIndex = 0; }
-    } else return;
-    renderLesson();
-  });
-  document.querySelector("#quiz-subject").addEventListener("change", (event) => {
-    selectedAnswer = -1;
-    startQuiz(event.target.value);
-  });
-  document.querySelector("#quiz-content").addEventListener("click", (event) => {
-    const answer = event.target.closest("[data-answer]");
-    if (answer && !hasAnswered) {
-      selectedAnswer = Number(answer.dataset.answer);
-      hasAnswered = true;
-      if (selectedAnswer === quizItems[quizIndex].answer) quizScore++;
-      renderQuiz();
-      document.querySelector(".answer-feedback")?.focus();
-      return;
-    }
-    if (event.target.closest("[data-quiz-next]") && hasAnswered) {
-      quizIndex++;
-      selectedAnswer = -1;
-      hasAnswered = false;
-      renderQuiz();
-    } else if (event.target.closest(".quiz-restart")) {
-      selectedAnswer = -1;
-      startQuiz();
-    }
   });
   document.querySelector("#theme-toggle").addEventListener("click", () => setTheme(!document.body.classList.contains("dark")));
   document.addEventListener("keydown", (event) => {
